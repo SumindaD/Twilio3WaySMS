@@ -17,6 +17,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 var hostCookMap = new Map();
 
+app.get('/RetrieveChatHistory', (req, res) => {
+  client.messages.list().then(messages => 
+    res.send({
+      chatHistory: messages
+    })
+  );
+});
+
 app.get('/CreateSMSChannel', (req, res) => {
   hostCookMap.set(req.query.from, req.query.to);
 
