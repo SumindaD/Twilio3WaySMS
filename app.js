@@ -1,3 +1,5 @@
+//This server needs to be publicly accessible by Twilio (To invoke RecievedSMS webhook). Use NGrok for dev purposes
+
 const express = require('express');
 const app = express();
 var server = require('http').createServer(app);
@@ -17,12 +19,33 @@ var hostCookMap = new Map();
 
 app.get('/RemoveAllParticipants', (req, res) => {
   client.proxy.services.list().then((services) => {
+
+    if(services.length == 0){
+      res.send({
+        message: 'No services found'
+      })
+    }
+
     services.forEach((service) => {
       console.log('Found Proxy services');
       client.proxy.services(service.sid).sessions.list().then((sessions) => {
+
+        if(sessions.length == 0){
+          res.send({
+            message: 'No sessions found'
+          })
+        }
+
         sessions.forEach((session) => {
           console.log('Found Sessions');
           client.proxy.services(service.sid).sessions(session.sid).participants.list().then((participants) => {
+
+            if(participants.length == 0){
+              res.send({
+                message: 'No participants found'
+              })
+            }
+
             participants.forEach((participant) => {
               console.log('Found Participants');
               participant.remove().then(participant => console.log('Removed Participant'));
@@ -45,6 +68,7 @@ app.get('/RetrieveChatHistory', (req, res) => {
   );
 });
 
+//Initiates the first SMS from Host or Cook
 app.get('/CreateSMSChannel', (req, res) => {
   hostCookMap.set(req.query.from, req.query.to);
 
@@ -55,6 +79,7 @@ app.get('/CreateSMSChannel', (req, res) => {
   });
 });
 
+//Creates a proxy service for 3 way communication
 app.get('/InitiateProxySession', (req, res) => {
   client.proxy.services.list().then((services) => {
     var participants = [{name: req.query.chatwith, no: req.query.to}, {name: req.query.whoAmI, no: req.query.from}];
@@ -70,6 +95,7 @@ app.get('/InitiateProxySession', (req, res) => {
   });
 });
 
+//This is the webhook for Twilio RecievedSMS event
 app.post('/RecievedSMS', (req, res) => {
 
   console.log("Recieved SMS");
