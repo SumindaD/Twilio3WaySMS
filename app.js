@@ -38,6 +38,42 @@ app.get('/RemoveAllParticipants', (req, res) => {
 
         sessions.forEach((session) => {
           console.log('Found Sessions');
+          client.proxy.services(service.sid).sessions(session.sid)
+          .update(
+                date_expiry=datetime(2018, 7, 31, 0, 0),
+                status='closed'
+          );
+
+          res.send({
+            message: 'Closed Sessions.'
+          });
+        });
+      });
+    });
+  });
+});
+
+app.get('/RemoveAllParticipants', (req, res) => {
+  client.proxy.services.list().then((services) => {
+
+    if(services.length == 0){
+      res.send({
+        message: 'No services found'
+      })
+    }
+
+    services.forEach((service) => {
+      console.log('Found Proxy services');
+      client.proxy.services(service.sid).sessions.list().then((sessions) => {
+
+        if(sessions.length == 0){
+          res.send({
+            message: 'No sessions found'
+          })
+        }
+
+        sessions.forEach((session) => {
+          console.log('Found Sessions');
           client.proxy.services(service.sid).sessions(session.sid).participants.list().then((participants) => {
 
             if(participants.length == 0){
