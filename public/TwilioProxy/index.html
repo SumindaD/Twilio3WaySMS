@@ -38,6 +38,7 @@
         <label>Kora Admin Section</label><br/>
         <button id="RetrieveChatHistory" onclick="RetrieveChatHistory()">Retrieve Chat History</button><br/>
         <button id="RemoveAllParticipants" onclick="RemoveAllParticipants()">Remove All Participants</button><br/>
+        <button id="EndAllSessions" onclick="RemoveAllParticipants()">End All Sessions</button><br/>
         <div id="ChatHistory" style="width: auto; height: 400px; overflow-y: scroll;"></div>
         <label id="logs"></label><br/>
     </div>
@@ -99,6 +100,15 @@
 
     function RemoveAllParticipants(){
         $.getJSON('/RemoveAllParticipants', null, 
+        function(data){
+            if(data){
+                $('#logs').append("</br><label>" + data.message + "</label>");
+            }
+        });
+    }
+
+    function EndAllSessions(){
+        $.getJSON('/EndAllSessions', null, 
         function(data){
             if(data){
                 $('#logs').append("</br><label>" + data.message + "</label>");
