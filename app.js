@@ -68,17 +68,6 @@ app.get('/RetrieveChatHistory', (req, res) => {
   );
 });
 
-//Initiates the first SMS from Host or Cook
-app.get('/CreateSMSChannel', (req, res) => {
-  hostCookMap.set(req.query.from, req.query.to);
-
-  sendSMS('You can start texting with ' + req.query.chatwith + ' via this number... ' + process.env.TWILIO_NUMBER, process.env.TWILIO_NUMBER, req.query.from);
-
-  res.send({
-    message: 'SMS initiation text sent to your number.'
-  });
-});
-
 //Creates a proxy service for 3 way communication
 app.get('/InitiateProxySession', (req, res) => {
   client.proxy.services.list().then((services) => {
@@ -107,8 +96,6 @@ app.post('/RecievedSMS', (req, res) => {
   client.messages.list({limit: 1}).then(messages => messages.forEach(
     m => {
       io.sockets.emit("RecievedSMS", { message: m.body, from: m.from, to: m.to });
-      console.log('Redirecting SMS to: ' + hostCookMap.get(m.from) + ' From: ' + process.env.TWILIO_NUMBER);
-      sendSMS(m.body, process.env.TWILIO_NUMBER, hostCookMap.get(m.from));
     }
   ));
 
@@ -124,17 +111,9 @@ io.on('connection', function(client) {
   client.on('disconnect', function () {
       console.log('Client disconnected. Id: ' + client.id);
   });
+
 });
 
-function sendSMS(message, from, to){
-  client.messages
-  .create({
-      body: message,
-      from: from,
-      to: to
-    })
-  .then(message => console.log(message.sid));
-};
 
 function createProxyService(participants, res){
   client.proxy.services.create({uniqueName: 'TwilioProxyService'}).then((service) => {
@@ -181,13 +160,13 @@ function createParticipants(serviceSId, sessionSId, new_participants, res){
     console.log('Creating participant ' + p.name);
 
     client.proxy.services(serviceSId).sessions(sessionSId).participants
-            .create({friendlyName: p.name, identifier: p.no})
-            .then((participant) => {
-              console.log('Added participant: ' + participant.friendlyName);
+    .create({friendlyName: p.name, identifier: p.no})
+    .then((participant) => {
+      console.log('Added participant: ' + participant.friendlyName);
 
-              sendProxySMS(serviceSId, sessionSId, participant.sid, 'You are connected!');
+      sendProxySMS(serviceSId, sessionSId, participant.sid, 'You are connected!');
 
-            });
+    });
   });
 
 
@@ -223,5 +202,5 @@ function sendProxySMS(serviceSId, sessionSId, participantSId, message){
   .participants(participantSId)
   .messageInteractions
   .create({body: message})
-  .then(message_interaction => console.log('Sent Proxy SMS: ' + message_interaction.sid));
+  .then(message_interaction => console.log('Connected. Please start the conversation.'));
 }
